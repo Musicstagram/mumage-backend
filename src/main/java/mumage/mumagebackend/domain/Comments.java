@@ -9,7 +9,7 @@ import jakarta.persistence.*; //javax->jarkarta
 @Entity
 @Getter
 @NoArgsConstructor
-public class Comments {
+public class Comments extends BaseTimeEntity{
 
     @Id
     @GeneratedValue
