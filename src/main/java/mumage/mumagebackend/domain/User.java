@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import org.hibernate.validator.constraints.UniqueElements;
 
 @Entity
 @NoArgsConstructor
@@ -19,13 +20,13 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
-    @Column(nullable = false, length = 15)
+    @Column(nullable = false, length = 15, unique = true)
     private String loginId;
     @Column(nullable = false)
     private String password;
     @Column(nullable = false, length = 10)
     private String name;
-    @Column(nullable = false, length = 15)
+    @Column(nullable = false, length = 15, unique = true)
     private String nickname;
     @Column
     private String profileUrl;

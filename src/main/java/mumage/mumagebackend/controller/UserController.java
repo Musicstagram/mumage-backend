@@ -8,6 +8,8 @@ import mumage.mumagebackend.dto.LoginRequestDto;
 import mumage.mumagebackend.dto.LoginResponseDto;
 import mumage.mumagebackend.dto.MessageDto;
 import mumage.mumagebackend.dto.UserJoinDto;
+import mumage.mumagebackend.dto.UserRequestDto;
+import mumage.mumagebackend.dto.UserResponseDto;
 import mumage.mumagebackend.service.UserService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -127,6 +129,37 @@ public class UserController {
         return new ResponseEntity<>(userService.test(principal), HttpStatus.OK);
     }
 
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<MessageDto> readUser(@PathVariable Long userId) {
+
+        UserResponseDto response = userService.read(userId);
+        MessageDto messageDto = MessageDto.builder()
+                .status(HttpStatus.OK.value())
+                .message("유저 정보 반환 성공")
+                .data(response).build();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(new MediaType("application", "json", Charset.forName("UTF-8")));
+
+        return new ResponseEntity<>(messageDto, headers, HttpStatus.OK);
+
+    }
+
+    @PatchMapping("/user/{userId}")
+    public ResponseEntity<MessageDto> updateUser(@PathVariable Long userId, @Valid @RequestBody UserRequestDto userRequestDto) {
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(new MediaType("application", "json", Charset.forName("UTF-8")));
+
+        UserResponseDto response = userService.update(userId, userRequestDto);
+        MessageDto messageDto = MessageDto.builder()
+                .status(HttpStatus.OK.value())
+                .message("유저 정보 수정 성공")
+                .data(response).build();
+
+        return new ResponseEntity<>(messageDto, headers, HttpStatus.OK);
+
+    }
+
     @DeleteMapping(value = "/user/{userId}")
     public ResponseEntity<MessageDto> withdrawMember(@PathVariable(value = "userId") Long userId) {
 
@@ -134,15 +167,11 @@ public class UserController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(new MediaType("application", "json", Charset.forName("UTF-8")));
 
-        if (userService.withdraw(userId)) {
-            messageDto.setStatus(HttpStatus.OK.value());
-            messageDto.setMessage("회원 탈퇴 성공");
-            return new ResponseEntity<>(messageDto,headers,HttpStatus.OK);
-        } else {
-            messageDto.setStatus(HttpStatus.BAD_REQUEST.value());
-            messageDto.setMessage("회원 탈퇴 실패");
-            return new ResponseEntity<>(messageDto,headers,HttpStatus.BAD_REQUEST);
-        }
+        userService.withdraw(userId);
+        messageDto.setStatus(HttpStatus.OK.value());
+        messageDto.setMessage("회원 탈퇴 성공");
+        return new ResponseEntity<>(messageDto, headers, HttpStatus.OK);
+
     }
 
 }

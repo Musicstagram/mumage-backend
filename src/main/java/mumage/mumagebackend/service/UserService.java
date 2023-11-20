@@ -19,7 +19,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import mumage.mumagebackend.dto.UserRequestDto;
+import mumage.mumagebackend.dto.UserResponseDto;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import org.webjars.NotFoundException;
 
 import java.security.Principal;
 import java.util.List;
@@ -68,7 +72,7 @@ public class UserService implements UserDetailsService {
             userRepository.delete(user.get());
             return true;
         } else {
-            return false;
+            throw new CustomException(ErrCode.NOT_EXIST_USER, HttpStatus.NOT_FOUND);
         }
     }
 
@@ -96,6 +100,52 @@ public class UserService implements UserDetailsService {
         }
     }
 
+    public UserResponseDto update(Long userId, UserRequestDto userRequestDto) {
+
+        Optional<User> oUser = userRepository.findByUserId(userId);
+
+        if (oUser.isPresent()) {
+            new NotFoundException("해당 유저 없음");
+        }
+
+        User user = oUser.get();
+
+        if(userRequestDto.getPassword() != null)
+            user.setPassword(userRequestDto.getPassword());
+        if(userRequestDto.getName() != null)
+        user.setName(userRequestDto.getName());
+        if(userRequestDto.getNickname() != null)
+        user.setNickname(userRequestDto.getNickname());
+
+        UserResponseDto response = UserResponseDto.builder()
+                .userId(user.getUserId())
+                .loginId(user.getLoginId())
+                .password(user.getPassword())
+                .name(user.getName())
+                .nickname(user.getNickname())
+                .email(user.getEmail())
+                .profileUrl(user.getProfileUrl())
+                .build();
+
+        return response;
+    }
+
+    public UserResponseDto read(Long userId) {
+
+        Optional<User> user = userRepository.findByUserId(userId);
+
+        UserResponseDto res = UserResponseDto.builder()
+                .userId(user.get().getUserId())
+                .loginId(user.get().getLoginId())
+                .password(user.get().getPassword())
+                .name(user.get().getName())
+                .nickname(user.get().getNickname())
+                .email(user.get().getEmail())
+                .profileUrl(user.get().getProfileUrl())
+                .build();
+        return res;
+
+    }
     /*
     전체 회원 조회
      */
