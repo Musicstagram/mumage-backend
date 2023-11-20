@@ -186,7 +186,7 @@ public class PostsController {
         //UUID가 적용된 이름 지정 -> return
         String newName = uuid + "_" + files.getOriginalFilename();
         //파일 저장할 기본 디렉토리
-        String baseDir = "C:\\git\\Songstagram\\uploads\\post\\";
+        String baseDir = "C:\\git\\Mumage-backend\\uploads\\post\\";
         //지정된 경로에 파일을 저장
         files.transferTo(new File(baseDir + newName));
         return newName;
@@ -196,7 +196,7 @@ public class PostsController {
 
     //파일 삭제
     public void removeFile(String path) {
-        String originalPath = "C:\\git\\Songstagram\\uploads\\post\\" + path;
+        String originalPath = "C:\\git\\Mumage-backend\\uploads\\post\\" + path;
         File file = new File(originalPath);
         if (file.delete()) {
             System.out.println("delete Success");
