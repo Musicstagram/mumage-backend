@@ -9,15 +9,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import mumage.mumagebackend.service.JwtService;
 import mumage.mumagebackend.service.UserService;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Optional;
 
 @Component
 @Slf4j
@@ -26,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtservice;
     private final UserService userService;
+    private final RedisTemplate redisTemplate;
 
     @Override
     protected void doFilterInternal(
@@ -33,25 +36,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @Nonnull HttpServletResponse response,
             @Nonnull FilterChain filterChain) throws ServletException, IOException {
 
+        // 로그인(/user/login)은 자동 필터 통과
         if (request.getRequestURI().equals("/user/login")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        final Optional<String> jwt = jwtservice.extractAccessToken(request);
+        // req에서 토큰 추출 => jwt
+        String jwt = jwtservice.extractAccessToken(request);
         log.info("token 값 유효성 체크 시작 토큰 : " + jwt);
 
-        if (jwt.isPresent() && SecurityContextHolder.getContext().getAuthentication() == null
-                && jwtservice.validateToken(jwt.get())) {
-            String loginId = jwtservice.extractLoginId(jwt.get());
-            UserDetails userDetails = userService.loadUserByUsername(loginId);
-            Authentication authentication = jwtservice.getAuthentication(userDetails);
+        if (jwt != null && SecurityContextHolder.getContext().getAuthentication() == null
+                && jwtservice.validateToken(jwt) && StringUtils.hasText(jwt)) {
+            String loginId = jwtservice.extractLoginId(jwt);
 
-            log.info("auth 발급 성공");
+            String isLogout = (String) redisTemplate.opsForValue().get(jwt);
 
-            SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-            securityContext.setAuthentication(authentication);
-            SecurityContextHolder.setContext(securityContext);
+            if (ObjectUtils.isEmpty(isLogout)) {
+                UserDetails userDetails = userService.loadUserByUsername(loginId);
+                Authentication authentication = jwtservice.getAuthentication(userDetails);
+
+                log.info("auth 발급 성공");
+
+                SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+                securityContext.setAuthentication(authentication);
+                SecurityContextHolder.setContext(securityContext);
+            }
+
         }
 
         filterChain.doFilter(request, response);
